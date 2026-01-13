@@ -44,7 +44,7 @@ export async function processOrderFulfillment(orderId: string, paidAmount: numbe
         try {
             const reservedCards = await db.select({ id: cards.id, cardKey: cards.cardKey })
                 .from(cards)
-                .where(sql`${cards.reservedOrderId} = ${orderId} AND COALESCE(${cards.isUsed}, false) = false`)
+                .where(sql`${cards.reservedOrderId} = ${orderId} AND COALESCE(${cards.isUsed}, 0) = 0`)
                 .limit(quantity);
 
             for (const card of reservedCards) {
@@ -70,7 +70,7 @@ export async function processOrderFulfillment(orderId: string, paidAmount: numbe
 
             const availableCards = await db.select({ id: cards.id, cardKey: cards.cardKey })
                 .from(cards)
-                .where(sql`${cards.productId} = ${order.productId} AND COALESCE(${cards.isUsed}, false) = false AND (${cards.reservedAt} IS NULL OR ${cards.reservedAt} < ${oneMinuteAgo})`)
+                .where(sql`${cards.productId} = ${order.productId} AND COALESCE(${cards.isUsed}, 0) = 0 AND (${cards.reservedAt} IS NULL OR ${cards.reservedAt} < ${oneMinuteAgo})`)
                 .limit(needed);
 
             for (const card of availableCards) {

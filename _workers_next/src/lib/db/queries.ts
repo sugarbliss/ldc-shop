@@ -61,9 +61,9 @@ export async function getProducts() {
             isActive: products.isActive,
             sortOrder: products.sortOrder,
             purchaseLimit: products.purchaseLimit,
-            stock: sql<number>`count(case when ${cards.id} IS NOT NULL AND COALESCE(${cards.isUsed}, false) = false AND (${cards.reservedAt} IS NULL OR ${cards.reservedAt} < ${Math.floor((Date.now() - 5 * 60 * 1000) / 1000)}) then 1 end)`,
-            locked: sql<number>`count(case when ${cards.id} IS NOT NULL AND COALESCE(${cards.isUsed}, false) = false AND (${cards.reservedAt} >= ${Math.floor((Date.now() - 5 * 60 * 1000) / 1000)}) then 1 end)`,
-            sold: sql<number>`count(case when COALESCE(${cards.isUsed}, false) = true then 1 end)`
+            stock: sql<number>`count(case when ${cards.id} IS NOT NULL AND COALESCE(${cards.isUsed}, 0) = 0 AND (${cards.reservedAt} IS NULL OR ${cards.reservedAt} < ${Math.floor((Date.now() - 5 * 60 * 1000) / 1000)}) then 1 end)`,
+            locked: sql<number>`count(case when ${cards.id} IS NOT NULL AND COALESCE(${cards.isUsed}, 0) = 0 AND (${cards.reservedAt} >= ${Math.floor((Date.now() - 5 * 60 * 1000) / 1000)}) then 1 end)`,
+            sold: sql<number>`count(case when COALESCE(${cards.isUsed}, 0) = 1 then 1 end)`
         })
             .from(products)
             .leftJoin(cards, eq(products.id, cards.productId))
@@ -85,9 +85,9 @@ export async function getActiveProducts() {
             category: products.category,
             isHot: products.isHot,
             purchaseLimit: products.purchaseLimit,
-            stock: sql<number>`count(case when ${cards.id} IS NOT NULL AND COALESCE(${cards.isUsed}, false) = false AND (${cards.reservedAt} IS NULL OR ${cards.reservedAt} < ${Math.floor((Date.now() - 5 * 60 * 1000) / 1000)}) then 1 end)`,
-            locked: sql<number>`count(case when ${cards.id} IS NOT NULL AND COALESCE(${cards.isUsed}, false) = false AND (${cards.reservedAt} >= ${Math.floor((Date.now() - 5 * 60 * 1000) / 1000)}) then 1 end)`,
-            sold: sql<number>`count(case when COALESCE(${cards.isUsed}, false) = true then 1 end)`
+            stock: sql<number>`count(case when ${cards.id} IS NOT NULL AND COALESCE(${cards.isUsed}, 0) = 0 AND (${cards.reservedAt} IS NULL OR ${cards.reservedAt} < ${Math.floor((Date.now() - 5 * 60 * 1000) / 1000)}) then 1 end)`,
+            locked: sql<number>`count(case when ${cards.id} IS NOT NULL AND COALESCE(${cards.isUsed}, 0) = 0 AND (${cards.reservedAt} >= ${Math.floor((Date.now() - 5 * 60 * 1000) / 1000)}) then 1 end)`,
+            sold: sql<number>`count(case when COALESCE(${cards.isUsed}, 0) = 1 then 1 end)`
         })
             .from(products)
             .leftJoin(cards, eq(products.id, cards.productId))
@@ -110,8 +110,8 @@ export async function getProduct(id: string) {
             category: products.category,
             isHot: products.isHot,
             purchaseLimit: products.purchaseLimit,
-            stock: sql<number>`count(case when ${cards.id} IS NOT NULL AND COALESCE(${cards.isUsed}, false) = false AND (${cards.reservedAt} IS NULL OR ${cards.reservedAt} < ${fiveMinutesAgo}) then 1 end)`,
-            locked: sql<number>`count(case when ${cards.id} IS NOT NULL AND COALESCE(${cards.isUsed}, false) = false AND (${cards.reservedAt} >= ${fiveMinutesAgo}) then 1 end)`
+            stock: sql<number>`count(case when ${cards.id} IS NOT NULL AND COALESCE(${cards.isUsed}, 0) = 0 AND (${cards.reservedAt} IS NULL OR ${cards.reservedAt} < ${fiveMinutesAgo}) then 1 end)`,
+            locked: sql<number>`count(case when ${cards.id} IS NOT NULL AND COALESCE(${cards.isUsed}, 0) = 0 AND (${cards.reservedAt} >= ${fiveMinutesAgo}) then 1 end)`
         })
             .from(products)
             .leftJoin(cards, eq(products.id, cards.productId))
@@ -245,13 +245,13 @@ export async function searchActiveProducts(params: {
             orderByParts.push(desc(products.price))
             break
         case 'stockDesc':
-            orderByParts.push(desc(sql<number>`count(case when ${cards.isUsed} = false then 1 end)`))
+            orderByParts.push(desc(sql<number>`count(case when ${cards.isUsed} = 0 then 1 end)`))
             break
         case 'soldDesc':
-            orderByParts.push(desc(sql<number>`count(case when ${cards.isUsed} = true then 1 end)`))
+            orderByParts.push(desc(sql<number>`count(case when ${cards.isUsed} = 1 then 1 end)`))
             break
         case 'hot':
-            orderByParts.push(desc(sql<number>`case when ${products.isHot} = true then 1 else 0 end`))
+            orderByParts.push(desc(sql<number>`case when ${products.isHot} = 1 then 1 else 0 end`))
             orderByParts.push(asc(products.sortOrder), desc(products.createdAt))
             break
         default:
@@ -270,9 +270,9 @@ export async function searchActiveProducts(params: {
             category: products.category,
             isHot: products.isHot,
             purchaseLimit: products.purchaseLimit,
-            stock: sql<number>`count(case when ${cards.id} IS NOT NULL AND COALESCE(${cards.isUsed}, false) = false AND (${cards.reservedAt} IS NULL OR ${cards.reservedAt} < ${Math.floor((Date.now() - 5 * 60 * 1000) / 1000)}) then 1 end)`,
-            locked: sql<number>`count(case when ${cards.id} IS NOT NULL AND COALESCE(${cards.isUsed}, false) = false AND (${cards.reservedAt} >= ${Math.floor((Date.now() - 5 * 60 * 1000) / 1000)}) then 1 end)`,
-            sold: sql<number>`count(case when COALESCE(${cards.isUsed}, false) = true then 1 end)`
+            stock: sql<number>`count(case when ${cards.id} IS NOT NULL AND COALESCE(${cards.isUsed}, 0) = 0 AND (${cards.reservedAt} IS NULL OR ${cards.reservedAt} < ${Math.floor((Date.now() - 5 * 60 * 1000) / 1000)}) then 1 end)`,
+            locked: sql<number>`count(case when ${cards.id} IS NOT NULL AND COALESCE(${cards.isUsed}, 0) = 0 AND (${cards.reservedAt} >= ${Math.floor((Date.now() - 5 * 60 * 1000) / 1000)}) then 1 end)`,
+            sold: sql<number>`count(case when COALESCE(${cards.isUsed}, 0) = 1 then 1 end)`
         })
             .from(products)
             .leftJoin(cards, eq(products.id, cards.productId))
